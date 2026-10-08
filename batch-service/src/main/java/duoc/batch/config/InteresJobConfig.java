@@ -18,7 +18,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.batch.core.step.skip.SkipPolicy;
 
@@ -66,10 +65,9 @@ public class InteresJobConfig {
             PlatformTransactionManager transactionManager,
             InteresRepository repository,
             InteresProcessor processor,
-            ThreadPoolTaskExecutor batchTaskExecutor,
             SkipPolicy batchSkipPolicy) {
         return new StepBuilder("monthlyInterestStep", jobRepository)
-                .<Interes, Interes>chunk(10, transactionManager)
+                .<Interes, Interes>chunk(50, transactionManager)
                 .faultTolerant()
                 .skipPolicy(batchSkipPolicy)
                 .retry(TransientDataAccessException.class)
@@ -77,11 +75,10 @@ public class InteresJobConfig {
                 .reader(interesReader())
                 .processor(processor)
                 .writer(interesWriter(repository))
-                .taskExecutor(batchTaskExecutor)
                 .build();
     }
 
-    @Bean
+    @Bean(name = {"monthlyInterestJob", "procesarInteresesJob", "interesesJob"})
     public Job monthlyInterestJob(JobRepository jobRepository,
             Step monthlyInterestStep,
             DatabaseCleanupJobListener interesCleanupListener) {

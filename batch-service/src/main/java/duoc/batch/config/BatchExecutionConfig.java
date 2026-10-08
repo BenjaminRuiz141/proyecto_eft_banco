@@ -12,9 +12,11 @@ public class BatchExecutionConfig {
     public ThreadPoolTaskExecutor batchTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(3);
-        executor.setMaxPoolSize(3);
-        executor.setQueueCapacity(0);
+        executor.setMaxPoolSize(5);
+        executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("batch-worker-");
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(5);
         executor.initialize();
         return executor;
     }

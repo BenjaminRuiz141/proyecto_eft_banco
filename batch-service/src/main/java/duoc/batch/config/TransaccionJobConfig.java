@@ -21,7 +21,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.batch.core.step.skip.SkipPolicy;
 
@@ -73,10 +72,9 @@ public class TransaccionJobConfig {
             PlatformTransactionManager transaccionManager,
             TransaccionRepository repository,
             TransaccionProcessor processor,
-            ThreadPoolTaskExecutor batchTaskExecutor,
             SkipPolicy batchSkipPolicy) {
         return new StepBuilder("dailyTransaccionStep", jobRepository)
-                .<Transaccion, Transaccion>chunk(10, transaccionManager)
+                .<Transaccion, Transaccion>chunk(50, transaccionManager)
                 .faultTolerant()
                 .skipPolicy(batchSkipPolicy)
                 .retry(TransientDataAccessException.class)
@@ -84,11 +82,10 @@ public class TransaccionJobConfig {
                 .reader(transaccionReader())
                 .processor(processor)
                 .writer(transaccionWriter(repository))
-                .taskExecutor(batchTaskExecutor)
                 .build();
     }
 
-    @Bean
+    @Bean(name = {"dailyTransaccionJob", "procesarMovimientosJob", "transaccionesDiariasJob"})
     public Job dailytransaccionJob(JobRepository jobRepository,
             Step dailytransaccionStep,
             TransaccionJobListener listener,

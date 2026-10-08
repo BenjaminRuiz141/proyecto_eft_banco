@@ -21,7 +21,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.batch.core.step.skip.SkipPolicy;
 
@@ -72,10 +71,9 @@ public class CuentaAnualJobConfig {
             PlatformTransactionManager transactionManager,
             CuentaAnualRepository repository,
             CuentaAnualProcessor processor,
-            ThreadPoolTaskExecutor batchTaskExecutor,
             SkipPolicy batchSkipPolicy) {
         return new StepBuilder("annualStatementStep", jobRepository)
-                .<CuentaAnual, CuentaAnual>chunk(10, transactionManager)
+                .<CuentaAnual, CuentaAnual>chunk(50, transactionManager)
                 .faultTolerant()
                 .skipPolicy(batchSkipPolicy)
                 .retry(TransientDataAccessException.class)
@@ -83,11 +81,10 @@ public class CuentaAnualJobConfig {
                 .reader(cuentaAnualReader())
                 .processor(processor)
                 .writer(cuentaAnualWriter(repository))
-                .taskExecutor(batchTaskExecutor)
                 .build();
     }
 
-    @Bean
+    @Bean(name = {"annualStatementJob", "procesarEstadosFinancierosJob", "estadosCuentaAnualesJob"})
     public Job annualStatementJob(JobRepository jobRepository,
             Step annualStatementStep,
             DatabaseCleanupJobListener cuentaAnualCleanupListener) {
