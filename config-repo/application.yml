@@ -1,0 +1,70 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers,circuitbreakerevents,metrics
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 5
+        minimum-number-of-calls: 3
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+    instances:
+      jmsBrokerService:
+        base-config: default
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 500ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+    instances:
+      jmsBrokerService:
+        base-config: default
+
+spring:
+  artemis:
+    mode: native
+    broker-url: tcp://localhost:61616
+    user: admin
+    password: admin
+  jms:
+    template:
+      default-destination: banco.saga.transacciones.queue
+
+banco:
+  saga:
+    queues:
+      transacciones: banco.saga.transacciones.queue
+      compensaciones: banco.saga.compensaciones.queue
+      dlq: ActiveMQ.DLQ
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:36000000}
+
